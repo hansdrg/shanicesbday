@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>A letter for your birthday</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#f1e9db;--ink:#2a2520;--faint:#8a7f6e;box-sizing:border-box}
+*,*::before,*::after{box-sizing:inherit}
+html,body{margin:0;background:#d4859a}
+body{font-family:'Courier Prime','Courier New',monospace;color:var(--ink);overflow:hidden}
+#bg{position:fixed;inset:0;width:100%;height:100%;filter:blur(2.5px) saturate(1.1);transform:scale(1.04);z-index:0}
+.veil{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(120% 90% at 50% 40%,rgba(120,40,60,0) 50%,rgba(120,40,62,.18))}
+.stage{position:relative;z-index:2;height:100vh;height:100dvh;display:flex;align-items:center;justify-content:center;
+  padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+.card{
+  position:relative;width:min(540px,88vw);height:min(80vh,740px);overflow:hidden;cursor:default;
+  background:var(--paper);
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .3  0 0 0 0 .25  0 0 0 0 .18  0 0 0 .09 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  box-shadow:0 30px 70px rgba(0,0,0,.45),0 2px 0 rgba(255,255,255,.4) inset;
+}
+.scroll{position:absolute;inset:0;overflow:hidden;padding:2.2rem 2.2rem 2.4rem}
+.scroll.done{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#cdbfa6 transparent}
+.date{position:absolute;top:1.5rem;right:2.2rem;font-size:.7rem;letter-spacing:.12em;color:var(--faint);z-index:2}
+.fade{position:absolute;left:0;right:0;height:3.2rem;z-index:1;pointer-events:none}
+.fade.top{top:0;background:linear-gradient(var(--paper) 40%,transparent)}
+.fade.bot{bottom:0;background:linear-gradient(transparent,var(--paper) 70%)}
+.body{font-size:.9rem;line-height:1.95;white-space:pre-wrap;padding-top:1.6rem;padding-bottom:3rem;transition:transform .35s ease-out}
+.body .g{visibility:hidden}
+.caret{display:inline-block;width:.55em;height:1.05em;margin-left:1px;vertical-align:-.15em;background:var(--ink)}
+.typing .caret{animation:none}
+.idle .caret{animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.hint{position:fixed;left:0;right:0;bottom:calc(1.1rem + env(safe-area-inset-bottom,0px));z-index:3;text-align:center;
+  color:#fff;text-shadow:0 1px 6px rgba(130,40,70,.7);font-size:.78rem;letter-spacing:.08em;transition:opacity .8s;pointer-events:none}
+@media (max-width:480px){.card{height:min(82vh,740px)}.scroll{padding:2rem 1.5rem 2.2rem}.date{right:1.5rem}.body{font-size:.84rem}}
+@media (prefers-reduced-motion:reduce){.body{transition:none}.idle .caret{animation:none}}
+#cover{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;
+  background:rgba(140,50,75,.3);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:opacity .9s}
+#cover.gone{opacity:0;pointer-events:none}
+#start{font:700 .95rem 'Courier Prime','Courier New',monospace;letter-spacing:.12em;color:var(--ink);background:var(--paper);
+  border:0;padding:1rem 1.6rem;box-shadow:0 14px 40px rgba(0,0,0,.4);cursor:pointer}
+#start:focus-visible,#mute:focus-visible{outline:3px solid #ffd27a;outline-offset:3px}
+#mute{position:fixed;z-index:5;top:calc(.9rem + env(safe-area-inset-top,0px));right:1rem;font:.78rem 'Courier Prime','Courier New',monospace;
+  letter-spacing:.08em;color:#fff;text-shadow:0 1px 6px rgba(130,40,70,.7);background:rgba(140,50,75,.45);border:1px solid rgba(255,230,240,.35);padding:.35rem .7rem;cursor:pointer}
+</style>
+</head>
+<body>
+<canvas id="bg" aria-hidden="true"></canvas>
+<div class="veil"></div>
+
+<div class="stage">
+  <article class="card" id="card" aria-label="Birthday letter">
+    <div class="date" id="date"></div>
+    <div class="fade top"></div><div class="fade bot"></div>
+    <div class="scroll" id="scroll"><div class="body typing" id="body"></div></div>
+  </article>
+</div>
+<div class="hint" id="hint" style="opacity:0">tap to skip</div>
+<audio id="song" src="song.mp3" loop preload="auto"></audio>
+<button id="mute" hidden aria-label="Toggle music">♪ on</button>
+<div id="cover"><button id="start">open your letter</button></div>
+
+<script>
+/* ===== EDIT YOUR LETTER HERE ===== */
+const DATE = "08.10.2026";
+const TEXT =
+`Dearest Shanice,
+
+Happy birthday!
+
+Well, by the time you see this it’ll probably have been a month. But I hope your day was fabulous!
+
+This year has been tumultuous for us both. In a good way, I think? You’ve been to five bagillion places and worked a full-time job and discovered lots about yourself. I’m keen to hear all about it! And for you to see what I’ve been doing at Channel 9.
+
+I know we haven’t been talking as much recently... It’s rough when I prefer texting and you prefer calling. With your hundreds of notifications/limited time, it’s not surprising!
+
+But I just wanted to remind you that you’re still my bestie and I love you lots. I’m so proud to see how much you’ve achieved. It’s genuinely so wonderful. You’re really adulting, career/resume-maxxing and LIFE-maxxing. Even a solo trip to Cambodia! How good! And with minimal second-guessing yourself (at least, as far as I’m aware).
+
+Seeing your updates in the group chat always warms my heart. Please continue those, you know at least I’m going to make it worth your while with my great reactions. Especially all those slay photos you have now. Like DAYUM girl!! You’ve always been stunning but are you getting more and more attractive every day? I think so!!!
+
+Which brings me to the gifts I have for you! It’s a shame that your polaroid camera keeps exploding, because it would be nice for you to put up your photos wherever you’re next staying... Having a physical medium for your favourite photos would be cool, right?
+
+Look no further than this printing invention you connect to your phone. Now you don’t have to worry about having to bring your polaroid camera out all the time! You can always print something out later if you want. Imagine the cute photos of you and Nathan you could print out to add to an anniversary gift...
+
+Well, I think this has become long enough. I hope this website actually works. I wanted to try making something in Claude since you’re the savviest AI gal I know. #upskilling?
+
+Miss you lots and so excited to see you!
+
+Lots of love,
+Hannah :)`;
+/* ================================== */
+
+document.getElementById('date').textContent = DATE;
+const body = document.getElementById('body'), card = document.getElementById('scroll'), hint = document.getElementById('hint');
+const n = TEXT.length;
+const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+let shown = '', i = 0, timer = null, finished = false, justFixed = false;
+
+function draw(){
+  body.innerHTML = esc(shown) + '<span class="caret"></span><span class="g">' + esc(TEXT.slice(i)) + '</span>';
+  const caret = body.querySelector('.caret');
+  const view = card.clientHeight - 64;
+  const shift = Math.max(0, caret.offsetTop + caret.offsetHeight - view);
+  body.style.transform = 'translateY(' + (-shift) + 'px)';
+}
+
+const rows = 'qwertyuiop asdfghjkl zxcvbnm';
+function wrongKey(ch){
+  const k = rows.indexOf(ch.toLowerCase());
+  const opts = [rows[k-1], rows[k+1]].filter(c => c && c !== ' ');
+  return opts.length ? opts[Math.floor(Math.random()*opts.length)] : null;
+}
+function delay(ch, prev){
+  let d = 36 + Math.random()*52;                 /* steady typing pace */
+  if (ch === ' ') d += 25;
+  if (ch === ',') d += 180;
+  if ('.!?'.includes(ch)) d += 300;
+  if (ch === '\n') d += prev === '\n' ? 600 : 340;  /* new paragraph = a longer think */
+  if (Math.random() < .035) d += 300 + Math.random()*350;  /* little hesitations */
+  return d;
+}
+
+function step(){
+  if (i >= n) return finish();
+  const ch = TEXT[i];
+  if (!justFixed && /[a-z]/i.test(ch) && Math.random() < .022){
+    const w = wrongKey(ch);
+    if (w){                                       /* typo, notice, backspace, retype */
+      shown += w; draw();
+      timer = setTimeout(() => {
+        shown = shown.slice(0,-1); draw(); justFixed = true;
+        timer = setTimeout(step, 150);
+      }, 280 + Math.random()*240);
+      return;
+    }
+  }
+  justFixed = false;
+  shown += ch; i++; draw();
+  timer = setTimeout(step, delay(ch, TEXT[i-2]));
+}
+
+function finish(){
+  finished = true; clearTimeout(timer);
+  shown = TEXT; i = n; draw();
+  body.classList.replace('typing','idle');
+  body.style.transition = 'none'; body.style.transform = 'none';
+  const c = body.querySelector('.caret');
+  card.classList.add('done');
+  card.scrollTop = Math.max(0, c.offsetTop + c.offsetHeight - (card.clientHeight - 64));
+  hint.textContent = 'scroll the letter to read it again';
+  hint.style.opacity = 1;
+  setTimeout(() => { hint.style.opacity = 0; }, 4000);
+}
+card.addEventListener('click', () => { if (!finished) finish(); });
+
+const song = document.getElementById('song'), mute = document.getElementById('mute');
+draw();
+document.getElementById('start').addEventListener('click', () => {
+  document.getElementById('cover').classList.add('gone');
+  song.volume = .6; song.play().catch(() => {});   /* a tap is what lets browsers play sound */
+  mute.hidden = false; hint.style.opacity = 1;
+  if (reduce) finish(); else timer = setTimeout(step, 1300);
+});
+mute.addEventListener('click', () => {
+  if (song.paused){ song.play(); mute.textContent = '♪ on'; } else { song.pause(); mute.textContent = '♪ off'; }
+});
+addEventListener('resize', () => { if (!finished) draw(); paint(); });
+
+/* dusk city backdrop, drawn once */
+const cv = document.getElementById('bg'), cx = cv.getContext('2d');
+function paint(){
+  const W = cv.width = innerWidth, H = cv.height = innerHeight;
+  let s = 11; const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  const g = cx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#f48fa6'); g.addColorStop(.45,'#fab9c6'); g.addColorStop(.7,'#ffe6ea'); g.addColorStop(1,'#d4859a');
+  cx.fillStyle = g; cx.fillRect(0,0,W,H);
+  [{base:.78,hMin:.06,hMax:.30,col:'rgba(247,166,184,.75)',win:0},
+   {base:.84,hMin:.08,hMax:.38,col:'rgba(228,122,148,.88)',win:.35},
+   {base:.92,hMin:.05,hMax:.26,col:'rgba(172,80,108,.95)',win:.55}].forEach(L => {
+    let x = -20;
+    while (x < W){
+      const w = (.025 + r()*.06) * W, h = (L.hMin + r()*(L.hMax-L.hMin)) * H, y = L.base*H - h;
+      cx.fillStyle = L.col; cx.fillRect(x, y, w, H - y);
+      if (L.win) for (let wy = y + 10; wy < L.base*H - 6; wy += 11) for (let wx = x + 5; wx < x + w - 5; wx += 9){
+        if (r() < L.win*.35){
+          cx.fillStyle = r() < .8 ? 'rgba(255,214,150,'+(.4+r()*.5)+')' : 'rgba(255,236,214,'+(.4+r()*.5)+')';
+          cx.fillRect(wx, wy, 3, 5);
+        }
+      }
+      x += w + r()*6;
+    }
+  });
+  for (let i = 0; i < 40; i++){
+    cx.fillStyle = 'rgba(255,225,170,'+(.12+r()*.2)+')';
+    cx.beginPath(); cx.arc(r()*W,(.6+r()*.32)*H,3+r()*9,0,6.283); cx.fill();
+  }
+  const f = cx.createLinearGradient(0,H*.9,0,H);
+  f.addColorStop(0,'rgba(120,50,70,0)'); f.addColorStop(1,'rgba(120,50,70,.9)');
+  cx.fillStyle = f; cx.fillRect(0,H*.9,W,H*.1);
+}
+paint();
+</script>
+</body>
+</html>
