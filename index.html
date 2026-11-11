@@ -46,6 +46,13 @@ body{font-family:'Courier Prime','Courier New',monospace;color:var(--ink);overfl
 #start:focus-visible,#mute:focus-visible{outline:3px solid #ffd27a;outline-offset:3px}
 #mute{position:fixed;z-index:5;top:calc(.9rem + env(safe-area-inset-top,0px));right:1rem;font:.78rem 'Courier Prime','Courier New',monospace;
   letter-spacing:.08em;color:#fff;text-shadow:0 1px 6px rgba(130,40,70,.7);background:rgba(140,50,75,.45);border:1px solid rgba(255,230,240,.35);padding:.35rem .7rem;cursor:pointer}
+
+.gift{white-space:normal;margin:2.6rem 0 0;text-align:center}
+.gift img{display:block;width:100%;height:auto;border:1px solid rgba(42,37,32,.25);box-shadow:0 8px 22px rgba(60,30,30,.22);transform:rotate(-.8deg)}
+.gift p{margin:1.1rem 0 .9rem;font-size:.8rem;color:var(--faint);letter-spacing:.04em}
+.dl{display:inline-block;font:700 .8rem 'Courier Prime','Courier New',monospace;letter-spacing:.1em;color:var(--ink);text-decoration:none;
+  border:1.5px solid var(--ink);padding:.7rem 1.1rem;transition:background .2s,color .2s}
+.dl:hover,.dl:focus-visible{background:var(--ink);color:var(--paper);outline:none}
 </style>
 </head>
 <body>
@@ -96,6 +103,7 @@ Hannah :)`;
 
 document.getElementById('date').textContent = DATE;
 const body = document.getElementById('body'), card = document.getElementById('scroll'), hint = document.getElementById('hint');
+const FIG = `<div class="gift"><img src="caricature.jpg" alt="Pencil caricature of two smiling friends by the sea"><p>surprise! it’s us!</p><a class="dl" href="caricature.jpg" download="caricature.jpg">download our caricatures</a></div>`;
 const n = TEXT.length;
 const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
 const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
@@ -116,26 +124,26 @@ function wrongKey(ch){
   return opts.length ? opts[Math.floor(Math.random()*opts.length)] : null;
 }
 function delay(ch, prev){
-  let d = 36 + Math.random()*52;                 /* steady typing pace */
+  let d = 20 + Math.random()*32;                 /* steady typing pace */
   if (ch === ' ') d += 25;
-  if (ch === ',') d += 180;
-  if ('.!?'.includes(ch)) d += 300;
-  if (ch === '\n') d += prev === '\n' ? 600 : 340;  /* new paragraph = a longer think */
-  if (Math.random() < .035) d += 300 + Math.random()*350;  /* little hesitations */
+  if (ch === ',') d += 100;
+  if ('.!?'.includes(ch)) d += 190;
+  if (ch === '\n') d += prev === '\n' ? 380 : 220;  /* new paragraph = a longer think */
+  if (Math.random() < .02) d += 180 + Math.random()*200;  /* little hesitations */
   return d;
 }
 
 function step(){
   if (i >= n) return finish();
   const ch = TEXT[i];
-  if (!justFixed && /[a-z]/i.test(ch) && Math.random() < .022){
+  if (!justFixed && /[a-z]/i.test(ch) && Math.random() < .004){
     const w = wrongKey(ch);
     if (w){                                       /* typo, notice, backspace, retype */
       shown += w; draw();
       timer = setTimeout(() => {
         shown = shown.slice(0,-1); draw(); justFixed = true;
-        timer = setTimeout(step, 150);
-      }, 280 + Math.random()*240);
+        timer = setTimeout(step, 90);
+      }, 200 + Math.random()*100);
       return;
     }
   }
@@ -152,7 +160,8 @@ function finish(){
   const c = body.querySelector('.caret');
   card.classList.add('done');
   card.scrollTop = Math.max(0, c.offsetTop + c.offsetHeight - (card.clientHeight - 64));
-  hint.textContent = 'scroll the letter to read it again';
+  body.insertAdjacentHTML('beforeend', FIG);
+  hint.textContent = 'scroll down for something extra';
   hint.style.opacity = 1;
   setTimeout(() => { hint.style.opacity = 0; }, 4000);
 }
